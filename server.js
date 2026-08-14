@@ -15,12 +15,12 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// Dynamic CORS Configuration (Allows Local Dev + Deployed Vercel URL)
+// Dynamic CORS Configuration
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   process.env.FRONTEND_URL
-].filter(Boolean); // Filters out undefined process.env.FRONTEND_URL during local test
+].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -54,12 +54,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Verify email connection on server startup
-transporter.verify((error, success) => {
+// Non-blocking Transporter Verification
+transporter.verify((error) => {
   if (error) {
-    console.error('❌ Email Transporter Error:', error);
+    console.log('⚠️ Email Transporter warning (check credentials/SMTP settings):', error.message);
   } else {
-    console.log('📧 Email Transporter is ready to send notifications');
+    console.log('📧 Email Transporter is ready');
   }
 });
 
@@ -196,12 +196,12 @@ app.post('/api/requests/reply', authenticateToken, async (req, res) => {
   }
 });
 
-// Connect Database & Start Server
+// Bind to port 0.0.0.0 and dynamic process.env.PORT for Render
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB successfully');
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+    app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => {
     console.error('❌ MongoDB Connection Error:', err);
